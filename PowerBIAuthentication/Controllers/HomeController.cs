@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using PowerBIAuthentication.Extensions;
 using PowerBIAuthentication.Models;
 
@@ -49,6 +50,35 @@ namespace PowerBIAuthentication.Controllers
 
         public IActionResult PowerBi()
         {
+            // Retrieve token from cache
+            string accessToken = _tokenAcquisition.GetAccessTokenOnBehalfOfUser(HttpContext, User, new string[] { "https://analysis.windows.net/powerbi/api/Dataset.Read.All" }).Result;
+
+            string responseContent = string.Empty;
+
+            //Configure dashboards request
+            System.Net.WebRequest request = System.Net.WebRequest.Create(String.Format("{0}/dashboards", _config["PowerBi:ApiUri"].ToString())) as System.Net.HttpWebRequest;
+            request.Method = "GET";
+            request.ContentLength = 0;
+            request.Headers.Add("Authorization", String.Format("Bearer {0}", accessToken));
+
+            PowerBIDashboards PBIDashboards = new PowerBIDashboards();
+
+            //Get dashboards response from request.GetResponse()
+            using (var response = request.GetResponse() as System.Net.HttpWebResponse)
+            {
+                //Get reader from response stream
+                using (var reader = new System.IO.StreamReader(response.GetResponseStream()))
+                {
+                    responseContent = reader.ReadToEnd();
+
+                    //Deserialize JSON string
+                    PBIDashboards = JsonConvert.DeserializeObject<PowerBIDashboards>(responseContent);
+                }
+            }
+
+            ViewData.Put<PowerBIDashboards>("PBIDashboards", PBIDashboards);
+            TempData["AccessToken"] = accessToken;
+
             return View();
         }
 
