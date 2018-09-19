@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -48,8 +49,14 @@ namespace PowerBIAuthentication.Controllers
             return View();
         }
 
-        public IActionResult PowerBi()
+        public IActionResult PowerBi(string dashboardId)
         {
+            if (!string.IsNullOrEmpty(dashboardId))
+            {
+                HttpContext.Session.SetString("DashboardId", dashboardId);
+                TempData["DashboardId"] = dashboardId;
+            }
+
             // Retrieve token from cache
             string accessToken = _tokenAcquisition.GetAccessTokenOnBehalfOfUser(HttpContext, User, new string[] { "https://analysis.windows.net/powerbi/api/Dataset.Read.All" }).Result;
 

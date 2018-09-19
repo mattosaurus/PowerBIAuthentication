@@ -1,7 +1,121 @@
-﻿
+﻿@using PowerBIAuthentication.Models
+@using PowerBIAuthentication.Extensions
+
+
 @{
     ViewData["Title"] = "PowerBi";
+
+    string dashboardId;
+    PowerBIDashboards PBIDashboards = ViewData.Get<PowerBIDashboards>("PBIDashboards");
+
+    if (TempData["DashboardId"] != null)
+    {
+        dashboardId = TempData["DashboardId"].ToString();
+    }
+    else
+    {
+        dashboardId = PBIDashboards.Dashboards.FirstOrDefault()?.Id;
+    }
 }
 
-<h2>PowerBi</h2>
+<div class="form-row mt-4 d-flex justify-content-center">
+    <div class="form-group">
+        <select id="dashboardSelect" class="form-control">
+            @foreach (PowerBIDashboard dashboard in PBIDashboards.Dashboards)
+            {
+                <option value="@dashboard.Id">@dashboard.DisplayName</option>
+            }
+        </select>
+    </div>
+</div>
+<div class="iframe-container">
+    <div id="dashboardContainer" class="dashboardContainer text-center"></div>
+</div>
 
+@section Scripts {
+    <script src="~/vendor/powerbi-client/powerbi.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            updateEmbedDashboard('@dashboardId');
+            formatIFrame();
+        });
+    </script>
+    <script type="text/javascript">
+        // Add listener to dashboard select
+        $('#dashboardSelect').on('change', function () {
+            var dashboardId = $(this).val();
+
+            updateEmbedDashboard(dashboardId);
+            formatIFrame();
+        });
+    </script>
+    <script type="text/javascript">
+        // update embed dashboard
+        function updateEmbedDashboard(dashboardId) {
+            var models = window['powerbi-client'].models;
+            embedUrl = 'https://app.powerbi.com/dashboardEmbed';
+
+            // check if the embed url was selected
+            if (dashboardId === "")
+                return;
+
+            // get the access token.
+            accessToken = '@((string)TempData["AccessToken"])';
+
+            // get width and height of document
+            var width = $(document).width();
+            var height = $(document).height() - 102;
+
+            // Embed configuration used to describe the what and how to embed.
+            // This object is used when calling powerbi.embed.
+            // You can find more information at https://github.com/Microsoft/PowerBI-JavaScript/wiki/Embed-Configuration-Details.
+            var config = {
+                type: 'dashboard',
+                id: dashboardId,
+                accessToken: accessToken,
+                embedUrl: embedUrl,
+                settings: {
+                    filterPaneEnabled: false,
+                    navContentPaneEnabled: false,
+                    layoutType: models.LayoutType.Custom,
+                    customLayout: {
+                        pageSize: {
+                            type: models.PageSizeType.Custom,
+                            width: 1320,
+                            height: 720
+                        },
+                        displayOption: models.DisplayOption.FitToPage
+                    }
+                }
+            };
+
+            // Grab the reference to the div HTML element that will host the dashboard.
+            var dashboardContainer = $('#dashboardContainer');
+
+            // Embed the dashboard and display it within the div container.
+            var dashboard = powerbi.embed(dashboardContainer.get(0), config);
+        }
+    </script>
+    <script type="text/javascript">
+        // Add listener to full screen button
+        $('#FullScreen').on('click', function () {
+            // Get a reference to the embedded report HTML element
+            var embedContainer = $('#dashboardContainer')[0];
+
+            // Get a reference to the embedded report.
+            dashboard = powerbi.get(embedContainer);
+
+            // Displays the report in full screen mode.
+            dashboard.fullscreen();
+        });
+    </script>
+    <script type="text/javascript">
+        function formatIFrame() {
+            $('#dashboardContainer iframe').attr('frameborder', '0');
+            var width = $(document).width();
+            var height = $(document).height() - 82;
+            $('#dashboardContainer iframe').width(1320);
+            $('#dashboardContainer iframe').height(720);
+        }
+    </script>
+}
