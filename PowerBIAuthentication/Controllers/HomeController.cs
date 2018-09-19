@@ -36,6 +36,11 @@ namespace PowerBIAuthentication.Controllers
             return View();
         }
 
+        public IActionResult PowerBi()
+        {
+            return View();
+        }
+
         [AllowAnonymous]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
