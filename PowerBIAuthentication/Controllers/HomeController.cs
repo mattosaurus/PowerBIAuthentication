@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using PowerBIAuthentication.Extensions;
 using PowerBIAuthentication.Models;
 
 namespace PowerBIAuthentication.Controllers
@@ -12,6 +14,15 @@ namespace PowerBIAuthentication.Controllers
     [Authorize]
     public class HomeController : Controller
     {
+        private readonly IConfiguration _config;
+        private readonly ITokenAcquisition _tokenAcquisition;
+
+        public HomeController(IConfiguration config, ITokenAcquisition tokenAcquisition)
+        {
+            _config = config;
+            _tokenAcquisition = tokenAcquisition;
+        }
+
         public IActionResult Index()
         {
             return View();
