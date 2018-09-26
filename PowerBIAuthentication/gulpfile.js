@@ -41,7 +41,7 @@ var deps = {
     "bootstrap": {
         "dist/**/*": ""
     },
-    "@fortawesome": {
+    "@fontawesome": {
         "fontawesome-free/*/*": ""
     },
     "jquery": {
